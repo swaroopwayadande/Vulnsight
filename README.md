@@ -4,6 +4,8 @@
 
 VulnSight is a local, low-impact web application security assessment toolkit for systems you own or are explicitly authorized to assess. It reviews HTTP security headers and cookie attributes, checks a certificate-validated TLS connection, and optionally requests only `robots.txt` and `sitemap.xml`. It is not a penetration test, vulnerability scanner for networks, or proof of OWASP compliance.
 
+The project is distributed under the MIT License; see [LICENSE](LICENSE).
+
 ## Features and limits
 
 - One HTTP or HTTPS URL per scan, explicit authorization confirmation, exact-host scope display, and public-address checks by default.
@@ -27,7 +29,7 @@ app/
   static/                 Plain CSS and JavaScript
 tests/                    Mocked/local unit tests
 data/                     Local SQLite database (ignored by Git)
-reports/                  Optional user-exported reports (ignored by Git)
+reports/                  Project report; generated exports are ignored by Git
 ```
 
 The dashboard uses FastAPI and Jinja templates. Scanning logic is separate from the API and persistence. The API currently runs each scan synchronously in the request, so keep the app local and submit one scan at a time.
@@ -47,13 +49,6 @@ cd Vulnsight
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install -r requirements-dev.txt
-```
-
-`requirements-dev.txt` includes `requirements.txt`, so install only the development file if you want both runtime and development tools at once:
-
-```bash
 python -m pip install -r requirements-dev.txt
 ```
 
@@ -91,11 +86,11 @@ Only assess systems you own or have explicit permission to test. Enter one exact
 
 DNS answers are validated and each socket is pinned to an approved resolved address, reducing DNS-rebinding risk. Do not use this MVP with untrusted target input or in a multi-user/public service. The app has no authentication because it is designed to run locally, not as a shared hosted service. Scanner traffic uses direct sockets and is not redirected by ambient proxy settings.
 
-Reports contain the exact hostname, checks, evidence, severity, remediation, confidence, limitations, and incomplete-check errors. They do not contain response bodies or cookie values. HTML output uses autoescaping.
+Reports contain the target origin and hostname, checks, evidence, severity, remediation, confidence, limitations, and incomplete-check errors. They do not store the submitted URL's path or query, response bodies, or cookie values. HTML output uses autoescaping.
 
 ## Tests and lint
 
-Tests use unit inputs, mocked name resolution, and synthetic report content; they do not contact public websites.
+Tests use unit inputs, mocked DNS and HTTP transport, and synthetic report content; they do not contact public websites or open network sockets.
 
 ```bash
 python -m pytest
@@ -108,6 +103,7 @@ ruff format --check .
 Each completed scan is saved in the ignored local database `data/vulnsight.db`. The dashboard history lets you reopen a result. Use **Download JSON** for automation or **View HTML report** for a printable report. PDF export is not included in this MVP.
 
 See [reports/PROJECT_REPORT.md](reports/PROJECT_REPORT.md) for the full project guide, including architecture, startup instructions, detection coverage, severity interpretation, and limitations.
+For a concise, accurate portfolio description, see [reports/RESUME_SUMMARY.md](reports/RESUME_SUMMARY.md).
 
 Example synthetic finding: a response without `X-Content-Type-Options` may receive a Low-severity observation suggesting `X-Content-Type-Options: nosniff`. This is not proof of exploitability; confirm that the header is appropriate for the application.
 

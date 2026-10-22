@@ -1,4 +1,5 @@
 """Bounded HTTP client that pins each connection to an approved DNS answer."""
+
 import http.client
 import socket
 import ssl
@@ -9,6 +10,7 @@ from .target_validation import resolve_addresses, validate_target
 
 class HeaderCollection(dict):
     """Case-preserving headers with access to duplicate fields such as Set-Cookie."""
+
     def __init__(self, pairs):
         super().__init__(pairs)
         self._pairs = pairs
@@ -18,6 +20,8 @@ class HeaderCollection(dict):
 
 
 class ScanResponse:
+    """Small, bounded response object used by scanner checks."""
+
     def __init__(self, status_code: int, pairs: list[tuple[str, str]], content: bytes):
         self.status_code = status_code
         self.headers = HeaderCollection(pairs)
@@ -27,6 +31,8 @@ class ScanResponse:
 
 
 class SafeClient:
+    """Direct, pinned transport with redirects disabled and bounded reads."""
+
     def __init__(self, *, local_lab: bool = False, timeout: float = 5, max_bytes: int = 65536):
         self.local_lab, self.timeout, self.max_bytes = local_lab, timeout, max_bytes
 
@@ -38,8 +44,6 @@ class SafeClient:
         port = parts.port or (443 if parts.scheme == "https" else 80)
         records = resolve_addresses(host, port, local_lab=self.local_lab)
         family, socktype, proto, _canonname, sockaddr = records[0]
-        pinned_ip = sockaddr[0]
-
         class PinnedHTTPConnection(http.client.HTTPConnection):
             def connect(self):
                 sock = socket.socket(family, socktype, proto)
@@ -66,12 +70,16 @@ class SafeClient:
         if parts.query:
             request_target += "?" + parts.query
         try:
-            connection.request("GET", request_target, headers={
-                "Host": host_header,
-                "User-Agent": "VulnSight/0.1 (authorized assessment)",
-                "Accept-Encoding": "identity",
-                "Connection": "close",
-            })
+            connection.request(
+                "GET",
+                request_target,
+                headers={
+                    "Host": host_header,
+                    "User-Agent": "VulnSight/0.1 (authorized assessment)",
+                    "Accept-Encoding": "identity",
+                    "Connection": "close",
+                },
+            )
             response = connection.getresponse()
             body = response.read(self.max_bytes + 1)
             if len(body) > self.max_bytes:

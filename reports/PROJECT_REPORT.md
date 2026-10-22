@@ -79,9 +79,9 @@ The scanner can report the following observations:
 | MIME sniffing | Whether `X-Content-Type-Options` is `nosniff` | Missing or unexpected value is Low severity. |
 | Referrer behavior | Whether `Referrer-Policy` is present | Missing policy is Low severity; impact depends on navigation and data in URLs. |
 | Browser capabilities | Whether `Permissions-Policy` is present | Missing policy is Informational; unused features may be disabled where appropriate. |
-| HTTPS transport policy | On HTTPS only, whether HSTS is present | Missing HSTS is Medium; enable only after validating the HTTPS deployment. |
-| Framing protection | Whether CSP `frame-ancestors` or `X-Frame-Options` is observed | Their absence is a Low review signal, not proof of clickjacking. CSP is more flexible. |
-| Cookie attributes | `Secure` on HTTPS cookies, `HttpOnly` on session-like cookies, and `SameSite` | Missing flags are Low, or Medium for a session-like cookie missing `HttpOnly`; context matters. Cookie values are never included. |
+| HTTPS transport policy | On HTTPS only, whether HSTS has a positive `max-age` | Missing or ineffective HSTS is Medium; enable only after validating the HTTPS deployment. |
+| Framing protection | Whether CSP `frame-ancestors` or a valid `X-Frame-Options` value is observed | Their absence or an invalid XFO value is a Low review signal, not proof of clickjacking. CSP is more flexible. |
+| Cookie attributes | `Secure` on HTTPS cookies, `HttpOnly` on session-like cookies, and `SameSite` | Missing flags are Low, or Medium for session-like cookies missing `HttpOnly` and `SameSite=None` without `Secure`; context matters. Cookie values are never included. |
 | TLS connection | Standard certificate validation, connection outcome, TLS version, and certificate expiration field | A failed validation is reported as a connection result, not as a complete cryptographic audit. |
 | Public metadata paths | Only `/robots.txt` and `/sitemap.xml` are optionally requested | HTTP 200 is Informational and means review the public response; it does not imply a vulnerability. |
 
@@ -111,7 +111,7 @@ Severity is a screening estimate, not a business-impact rating. Findings need to
 
 ## 6. Reports and stored data
 
-Every result includes a scan ID, UTC timestamp, target hostname and scope, tool version, performed and skipped checks, severity summary, findings, TLS outcome, errors, and a limited-assessment disclaimer. JSON is available for automation. HTML uses template autoescaping and print styles.
+Every result includes a scan ID, UTC timestamp, target origin and hostname scope, tool version, performed and skipped checks, severity summary, findings, TLS outcome, errors, and a limited-assessment disclaimer. The submitted path and query are not stored. JSON is available for automation. HTML uses template autoescaping and print styles.
 
 Completed scans are stored in `data/vulnsight.db`, which is ignored by Git. Reports downloaded from the dashboard may be saved by the operator under `reports/generated/`, also ignored by Git. This project report is maintained in `reports/PROJECT_REPORT.md`.
 
@@ -125,7 +125,7 @@ The fixed path list is intentionally short. A 200 response from `robots.txt` or 
 
 ## 8. Tests and quality checks
 
-The test suite covers URL and scope validation, private-address blocking, redirect scope, header and cookie observations, severity summaries, response size limits, disabled redirect following, and HTML escaping. The HTTP transport test uses an explicitly started loopback fixture; tests do not contact public websites.
+The test suite covers URL and scope validation, private-address blocking, redirect scope, header and cookie observations, severity summaries, public-path classification, API authorization/input/persistence behavior, response size limits, disabled redirect following, and HTML escaping. DNS and HTTP transport are mocked; tests do not contact public websites or open network sockets.
 
 Run:
 
@@ -137,6 +137,6 @@ ruff format --check .
 
 ## 9. Current implementation status and next steps
 
-The initial application, dashboard, API, SQLite history, JSON/HTML reports, safe bounded transport, setup documentation, and unit tests are present. Python syntax compilation and target-validation smoke checks passed. Dependency installation timed out while reaching the package index, so pytest and Ruff could not be run; this execution sandbox also blocked opening a loopback test socket. Install the dependencies inside `.venv` and run the test commands above when package-index access is available. PDF export, background scan jobs, deeper policy validation, and a richer TLS certificate detail view are not part of this MVP.
+The initial application, dashboard, API, SQLite history, JSON/HTML reports, safe bounded transport, setup documentation, and unit tests are present. Python syntax compilation and mocked scanner smoke checks passed. Dependency installation timed out while reaching the package index, so pytest and Ruff could not be run. Install the dependencies inside `.venv` and run the test commands above when package-index access is available. PDF export, background scan jobs, deeper policy validation, and a richer TLS certificate detail view are not part of this MVP.
 
 Recommended next work is to restore package-index access, install dependencies into `.venv`, run and repair the test/lint checks, then validate the complete UI/API flow against a local lab fixture. Continue to avoid public-target scans during development.

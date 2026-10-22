@@ -1,1 +1,73 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>VulnSight report</title><style>body{font:16px system-ui;background:#101923;color:#e8f1f8;max-width:960px;margin:2rem auto;padding:0 1rem}article,header{background:#182634;padding:1rem 1.3rem;margin:1rem 0;border-radius:10px}small{color:#adc2d2}.sev{font-weight:700;color:#70d9ef}@media print{body{background:white;color:#111}article,header{background:white;border:1px solid #ccc}}</style></head><body><header><h1>VulnSight assessment</h1><p>Target: {{ report.hostname }} · {{ report.timestamp_utc }}</p><p>Scope: {{ report.permitted_scope }}</p><p>{{ report.disclaimer }}</p></header><h2>Summary</h2><ul>{% for level,count in report.summary.items() %}<li>{{ level }}: {{ count }}</li>{% endfor %}</ul><h2>TLS connection check</h2><p>{% if report.tls.ok %}Certificate validation succeeded. TLS version: {{ report.tls.tls_version }}. Expiration: {{ report.tls.notAfter or "not reported" }}.{% else %}{{ report.tls.detail }}{% endif %}</p><h2>Findings</h2>{% for finding in report.findings %}<article><h3>{{ finding.title }}</h3><p class="sev">{{ finding.severity }} · {{ finding.category }}</p><p>{{ finding.rationale }}</p><p><b>Evidence:</b> {{ finding.evidence }}</p><p><b>Impact:</b> {{ finding.impact }}</p><p><b>Remediation:</b> {{ finding.remediation }}</p><small>Confidence: {{ finding.confidence }}. {{ finding.limitations }}</small></article>{% else %}<p>No findings were produced.</p>{% endfor %}<h2>Incomplete checks</h2><ul>{% for error in report.errors %}<li>{{ error }}</li>{% endfor %}</ul></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>VulnSight assessment report</title>
+    <style>
+      body { max-width: 960px; margin: 2rem auto; padding: 0 1rem; background: #101923; color: #e8f1f8; font: 16px/1.55 system-ui, sans-serif; }
+      header, article, section { margin: 1rem 0; padding: 1rem 1.3rem; border: 1px solid #29404f; border-radius: 10px; background: #182634; }
+      h1, h2, h3 { line-height: 1.25; }
+      small, .muted { color: #adc2d2; }
+      .severity { color: #70d9ef; font-weight: 700; }
+      @media print { body { max-width: none; background: white; color: #111; } header, article, section { background: white; border-color: #ccc; break-inside: avoid; } small, .muted { color: #444; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>VulnSight assessment</h1>
+      <p><strong>Target:</strong> {{ report.target }}</p>
+      <p><strong>Permitted scope:</strong> {{ report.permitted_scope }}</p>
+      <p><strong>Scan ID:</strong> {{ report.scan_id }}</p>
+      <p><strong>UTC timestamp:</strong> {{ report.timestamp_utc }}</p>
+      <p><strong>Tool version:</strong> {{ report.tool_version }}</p>
+      <p>{{ report.disclaimer }}</p>
+    </header>
+
+    <section aria-labelledby="summary-title">
+      <h2 id="summary-title">Severity summary</h2>
+      <ul>
+        {% for level, count in report.summary.items() %}
+        <li>{{ level }}: {{ count }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section aria-labelledby="checks-title">
+      <h2 id="checks-title">Checks performed</h2>
+      <ul>{% for check in report.checks_performed %}<li>{{ check }}</li>{% endfor %}</ul>
+      <h3>Checks skipped</h3>
+      {% if report.checks_skipped %}
+      <ul>{% for check in report.checks_skipped %}<li>{{ check }}</li>{% endfor %}</ul>
+      {% else %}<p>None.</p>{% endif %}
+      <h3>TLS connection</h3>
+      {% if report.tls.ok %}
+      <p>Certificate validation succeeded. TLS version: {{ report.tls.tls_version }}. Expiration field: {{ report.tls.notAfter or "not reported" }}.</p>
+      {% else %}<p>{{ report.tls.detail }}</p>{% endif %}
+    </section>
+
+    <section aria-labelledby="findings-title">
+      <h2 id="findings-title">Findings</h2>
+      {% for finding in report.findings %}
+      <article>
+        <h3>{{ finding.title }}</h3>
+        <p class="severity">{{ finding.severity }} · {{ finding.category }} · {{ finding.id }}</p>
+        <p>{{ finding.rationale }}</p>
+        <p><strong>Evidence:</strong> {{ finding.evidence }}</p>
+        <p><strong>Impact:</strong> {{ finding.impact }}</p>
+        <p><strong>Remediation:</strong> {{ finding.remediation }}</p>
+        <small>Confidence: {{ finding.confidence }}. {{ finding.limitations }}</small>
+      </article>
+      {% else %}<p>No findings were produced by the selected checks.</p>{% endfor %}
+    </section>
+
+    <section aria-labelledby="errors-title">
+      <h2 id="errors-title">Errors and incomplete checks</h2>
+      {% if report.errors %}
+      <ul>{% for error in report.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+      {% else %}<p>None reported.</p>{% endif %}
+    </section>
+
+    <p class="muted">Automated limited assessment. Validate findings manually; this is not a full penetration test.</p>
+  </body>
+</html>
